@@ -7,9 +7,10 @@
 
 ## Games
 
-#### [Wacky Bubblegum of the Damned](wacky-bubblegum)
+#### [Wacky Bubblegum of the Damned](wacky-bubblegum) [IN PROGRESS]
 
-Collect as much gold as you can, while avoiding getting stuck in gum bubbles blown by cursed evil-doers. Coded in javascript using [enchant.js][].
+Collect as many gems as you can, while avoiding getting stuck in gum bubbles
+blown by cursed evil-doers. Coded in javascript using [enchant.js][].
 
 ## Co-conspirators
 
