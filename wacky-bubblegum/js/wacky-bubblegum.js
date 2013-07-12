@@ -9,8 +9,10 @@ SOUTH = 2;
 WEST = 3;
 
 ENEMY_SPAWN_RATE = 60;
-GEM_SPAWN_RATE = 120;
-GEM_MAX_AGE = 120;
+GEM_SPAWN_RATE = 90;
+GEM_AGE = 120;
+
+MAX_HITS = 3;
 
 
 function getRandomInt(max) {
@@ -28,6 +30,9 @@ Player = Class.create(Sprite, {
 
         this.x = STAGE_SIZE / 2;
         this.y = STAGE_SIZE / 2;
+
+        this.score = 0;
+        this.hits = 0;
     },
 
     onenterframe: function () {
@@ -74,7 +79,7 @@ Monster = Class.create(Sprite, {
                 this.y = getRandomInt(STAGE_SIZE);
                 break;
         }
-        game.rootScene.addChild(this);
+        game.currentScene.addChild(this);
     },
 
     isOnStage: function () {
@@ -88,7 +93,12 @@ Monster = Class.create(Sprite, {
 
     onenterframe: function () {
         if (!this.isOnStage()) {
-            game.rootScene.removeChild(this);
+            game.currentScene.removeChild(this);
+        }
+
+        if (this.intersect(player)) {
+            player.hits++;
+            game.currentScene.removeChild(this);
         }
 
         switch (this.direction) {
@@ -118,30 +128,104 @@ Gem = Class.create(Sprite, {
 
         this.x = getRandomInt(STAGE_SIZE);
         this.y = getRandomInt(STAGE_SIZE);
-        game.rootScene.addChild(this);
+        game.currentScene.addChild(this);
     },
 
     onenterframe: function () {
-        if (this.age > GEM_MAX_AGE) {
-            game.rootScene.removeChild(this);
+        if (this.age > GEM_AGE) {
+            game.currentScene.removeChild(this);
+        }
+
+        if (this.intersect(player)) {
+            player.score++;
+            game.currentScene.removeChild(this);
         }
     }
 });
 
+
+ScoreLabel = Class.create(Label, {
+    initialize: function () {
+        Label.call(this, 'Score: ' + player.score);
+        this.font = 'bold 24px UnifrakturCook';
+        this.x = 5;
+    },
+
+    onenterframe: function () {
+        this.text = 'Score: ' + player.score;
+    }
+});
+
+
+StartScene = Class.create(Scene, {
+    initialize: function () {
+        Scene.call(this);
+        var start = new Sprite(236, 48);
+        start.image = game.assets['img/start.png'];
+        start.x = (STAGE_SIZE - start.width) / 2;
+        start.y = (STAGE_SIZE - start.height) / 2;
+        this.addChild(start);
+    },
+
+    ontouchend: function () {
+        game.replaceScene(new GameScene());
+    }
+});
+
+
+GameOverScene = Class.create(Scene, {
+    initialize: function () {
+        Scene.call(this);
+        var end = new Sprite(189, 97);
+        end.image = game.assets['img/end.png'];
+        end.x = (STAGE_SIZE - end.width) / 2;
+        end.y = (STAGE_SIZE - end.height) / 2;
+        this.addChild(end);
+        this.addChild(new ScoreLabel());
+    },
+
+    ontouchend: function () {
+        game.replaceScene(new GameScene());
+    }
+});
+
+
+GameScene = Class.create(Scene, {
+    initialize: function () {
+        Scene.call(this);
+        player = new Player();
+        this.addChild(player);
+        this.addChild(new ScoreLabel());
+        new Gem();
+    },
+
+    onenterframe: function () {
+        if (gameOver()) {
+            game.replaceScene(new GameOverScene());
+        }
+
+        if (this.age % GEM_SPAWN_RATE === (GEM_SPAWN_RATE / 2)) {
+            new Gem();
+        }
+        if (this.age % ENEMY_SPAWN_RATE === 0) {
+            new Monster();
+        }
+    }
+});
+
+
+var gameOver = function () {
+    return player.hits >= MAX_HITS;
+};
+
 window.onload = function () {
     game = new Core(STAGE_SIZE, STAGE_SIZE);
-    game.preload('img/player.png', 'img/monster.gif', 'img/icons.png');
+    game.preload(
+        'img/player.png', 'img/monster.gif', 'img/icons.png',
+        'img/start.png', 'img/end.png'
+    );
     game.onload = function () {
-        player = new Player();
-        game.rootScene.addChild(player);
-
-        game.rootScene.tl.then(function() {
-            var gem = new Gem();
-        }).delay(GEM_SPAWN_RATE).loop();
-
-        game.rootScene.tl.then(function() {
-            var monster = new Monster();
-        }).delay(ENEMY_SPAWN_RATE).loop();
+        game.pushScene(new StartScene());
     };
     game.start();
 };
