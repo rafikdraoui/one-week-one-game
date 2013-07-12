@@ -13,6 +13,11 @@ GEM_SPAWN_RATE = 90;
 GEM_AGE = 120;
 
 MAX_HITS = 3;
+STUCK_TIME = 30;
+
+BUBBLE_GROWTH_INTERVAL = 30;
+MAX_BUBBLE_SIZE_LEVEL = 3;
+BUBBLE_SIZES = [4, 8, 16];
 
 
 function getRandomInt(max) {
@@ -33,9 +38,19 @@ Player = Class.create(Sprite, {
 
         this.score = 0;
         this.hits = 0;
+        this.stuck = 0;
     },
 
     onenterframe: function () {
+        if (this.stuck > 0) {
+            this.stuck--;
+            this.rotation = this.rotation + (360 / STUCK_TIME);
+            return;
+        }
+        else {
+            this.rotation = 0;
+        }
+
         if (game.input.left && this.x > 0) {
             this.x -= SPEED;
         }
@@ -53,10 +68,12 @@ Player = Class.create(Sprite, {
 
 
 Monster = Class.create(Sprite, {
-    initialize: function () {
+    initialize: function (bubble) {
         Sprite.call(this, 48, 48);
         this.image = game.assets['img/monster.gif'];
         this.frame = 3;
+
+        this.bubble = bubble;
 
         this.direction = getRandomInt(3);
         switch (this.direction) {
@@ -93,11 +110,18 @@ Monster = Class.create(Sprite, {
 
     onenterframe: function () {
         if (!this.isOnStage()) {
+            game.currentScene.removeChild(this.bubble);
             game.currentScene.removeChild(this);
         }
 
-        if (this.intersect(player)) {
+        if (this.age % BUBBLE_GROWTH_INTERVAL === 0) {
+            this.bubble.grow();
+        }
+
+        if (player.within(this.bubble, this.bubble.radius)) {
             player.hits++;
+            player.stuck = STUCK_TIME;
+            game.currentScene.removeChild(this.bubble);
             game.currentScene.removeChild(this);
         }
 
@@ -115,6 +139,43 @@ Monster = Class.create(Sprite, {
                 this.moveBy(-SPEED, 0);
                 break;
         }
+
+        this.bubble.x = this.x + this.width / 4;
+        this.bubble.y = this.y + this.height / 4;
+    }
+});
+
+
+Bubble = Class.create(Sprite, {
+    initialize: function () {
+        Sprite.call(this, 16, 16);
+        this.image = game.assets['img/bubbles.png'];
+        this.frame = 5;
+
+        this.size_level = 0;
+        this.growing = false;
+        this.radius = this.width / 2;
+        game.currentScene.addChild(this);
+    },
+
+    grow: function () {
+        if (this.size_level < MAX_BUBBLE_SIZE_LEVEL) {
+            this.growing = true;
+        }
+    },
+
+    onenterframe: function () {
+        if (this.growing) {
+            if (this.scaleX < BUBBLE_SIZES[this.size_level]) {
+                this.scaleX++;
+                this.scaleY++;
+                this.radius = this.scaleX * this.width / 2;
+            }
+            else {
+                this.growing = false;
+                this.size_level++;
+            }
+        }
     }
 });
 
@@ -126,8 +187,8 @@ Gem = Class.create(Sprite, {
         this.frame = 64;
         this.scale(1.3);
 
-        this.x = getRandomInt(STAGE_SIZE);
-        this.y = getRandomInt(STAGE_SIZE);
+        this.x = getRandomInt(STAGE_SIZE - this.width);
+        this.y = getRandomInt(STAGE_SIZE - this.height);
         game.currentScene.addChild(this);
     },
 
@@ -140,6 +201,8 @@ Gem = Class.create(Sprite, {
             player.score++;
             game.currentScene.removeChild(this);
         }
+
+        this.scaleX = Math.sin(this.age * 0.1);
     }
 });
 
@@ -208,7 +271,7 @@ GameScene = Class.create(Scene, {
             new Gem();
         }
         if (this.age % ENEMY_SPAWN_RATE === 0) {
-            new Monster();
+            new Monster(new Bubble());
         }
     }
 });
@@ -221,7 +284,7 @@ var gameOver = function () {
 window.onload = function () {
     game = new Core(STAGE_SIZE, STAGE_SIZE);
     game.preload(
-        'img/player.png', 'img/monster.gif', 'img/icons.png',
+        'img/player.png', 'img/monster.gif', 'img/icons.png', 'img/bubbles.png',
         'img/start.png', 'img/end.png'
     );
     game.onload = function () {
