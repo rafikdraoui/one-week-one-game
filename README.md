@@ -16,9 +16,10 @@ blown by cursed evil-doers. Coded in javascript using [enchant.js][].
 
 We have had enough of this colonial bullshit. Let's revolt!
 
-The idea is to use (colored) object detection from the webcam stream to implement
-the controls (crosshair and shooting), and then use [enchant.js][] for drawing
-on the canvas. Let's see how far I can get in a week.
+The idea is to use (colored) object detection from the webcam stream to
+implement the controls (crosshair and shooting) ~~and then use [enchant.js][]
+for drawing on the canvas~~, using OpenCV and python. Let's see how far I can
+get in a week.
 
 
 ## Co-conspirators

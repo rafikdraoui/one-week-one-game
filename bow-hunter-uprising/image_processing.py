@@ -4,7 +4,8 @@ import cv2
 # NOTE: In an HSV tuple in OpenCV, the values for H goes from 1 to 180 and
 # those for S and V from 1 to 256. The following thresholds have been found by
 # starting from the chart at `en.wikipedia.org/wiki/Web_colors#HTML_color_name`
-# and experimenting.
+# and experimenting. These are not very robust, they change a lot according to
+# the ambiant lightning, the material of the object to detect, etc
 
 MIN_RED_THRESHOLD = (160, 128, 128)
 MAX_RED_THRESHOLD = (180, 256, 256)
@@ -17,7 +18,10 @@ MAX_YELLOW_THRESHOLD = (40, 256, 256)
 
 
 # The area of a colored contoured must be at least that large to be considered
-MIN_CONTOUR_AREA = 2000
+MIN_CONTOUR_AREA = 500
+
+
+first = lambda tup: tup[0]
 
 
 def get_centers_of_roi(im, min_t, max_t):
@@ -30,20 +34,23 @@ def get_centers_of_roi(im, min_t, max_t):
     """
 
     # smooth the image to remove some noise
-    smoothed1 = cv2.blur(im, (3, 3))
+    smooth = cv2.blur(im, (13, 13))
+
+    cv2.imwrite('sss.jpg', smooth)
 
     # convert from RGB to HSV (easier to detect hues)
-    im_hsv = cv2.cvtColor(smoothed1, cv2.COLOR_BGR2HSV)
+    im_hsv = cv2.cvtColor(smooth, cv2.COLOR_BGR2HSV)
+
+    cv2.imwrite('hhh.jpg', im_hsv)
 
     # get a binary image where each pixel is white if its HSV value is between
     # `min_t` and `max_t`, or is black otherwise
     im_thresh = cv2.inRange(im_hsv, min_t, max_t)
 
-    # smooth the resulting binary image to remove noise
-    smoothed2 = cv2.blur(im_thresh, (3, 3))
+    cv2.imwrite('ttt.jpg', im_thresh)
 
     contours, _ = cv2.findContours(
-        smoothed2, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        im_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     result = []
     for contour in contours:
@@ -58,13 +65,13 @@ def get_centers_of_roi(im, min_t, max_t):
         center_x = int(moments['m10'] / moments['m00'])
         center_y = int(moments['m01'] / moments['m00'])
 
-        result.append((center_x, center_y))
+        result.append((area, center_x, center_y))
 
-    return result
+    return sorted(result, key=first)
 
 
 def main():
-    """Draw a yellow circle centered on the mass centers on each red region of
+    """Draw a yellow circle centered on the mass centers on each blue region of
     the image.
     """
     import sys
@@ -76,14 +83,14 @@ def main():
 
     im = cv2.imread(infile)
 
-    min_t = MIN_RED_THRESHOLD
-    max_t = MAX_RED_THRESHOLD
+    min_t = MIN_BLUE_THRESHOLD
+    max_t = MAX_BLUE_THRESHOLD
     centers = get_centers_of_roi(im, min_t, max_t)
 
     radius = 30
     color = (0, 186, 255)  # yellow
-    for center in centers:
-        cv2.circle(im, center, radius, color)
+    for area, x, y in centers:
+        cv2.circle(im, (x, y), radius, color)
 
     cv2.imwrite(outfile, im)
 

@@ -1,6 +1,6 @@
 # Exquisite Bow Hunter Uprising
 
-### Plan
+### Original Plan
 
 Capture webcam stream using `getUserMedia`, send video frames through
 websockets to a (python) websocket server that will run a feature detection
@@ -12,11 +12,19 @@ Hopefully this is fast enough. I have seen pure javascript implementations that
 run purely in the browser, but they seem to be good only for face detection
 (hand/fist detection is spotty).
 
+### Scaled Down Plan
+
+Turns out that sending images from the browser to the server and drawing on the
+canvas is too slow, so instead the game will happen purely in python, using
+OpenCV to show the video with the crosshair and enemy drawings on top of it.
 
 ### What's done:
 
 - Detecting center coordinates of colored regions of a jpeg image (see
-  `get_centers.py`).
+  `image_processing.py`).
 
+- Simple game loop, video is shown with crosshair following a blue object, and
+  enemies being spawned and getting killed when the crosshair intersects with
+  them.
 
 [OpenCV]: http://opencv.org/
