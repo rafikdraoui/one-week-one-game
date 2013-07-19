@@ -36,18 +36,12 @@ def get_centers_of_roi(im, min_t, max_t):
     # smooth the image to remove some noise
     smooth = cv2.blur(im, (13, 13))
 
-    cv2.imwrite('sss.jpg', smooth)
-
     # convert from RGB to HSV (easier to detect hues)
     im_hsv = cv2.cvtColor(smooth, cv2.COLOR_BGR2HSV)
-
-    cv2.imwrite('hhh.jpg', im_hsv)
 
     # get a binary image where each pixel is white if its HSV value is between
     # `min_t` and `max_t`, or is black otherwise
     im_thresh = cv2.inRange(im_hsv, min_t, max_t)
-
-    cv2.imwrite('ttt.jpg', im_thresh)
 
     contours, _ = cv2.findContours(
         im_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
