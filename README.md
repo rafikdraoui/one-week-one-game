@@ -12,7 +12,7 @@
 Collect as many gems as you can, while avoiding getting stuck in gum bubbles
 blown by cursed evil-doers. Coded in javascript using [enchant.js][].
 
-#### [Exquisite Bow Hunter Uprising](bow-hunter-uprising) [IN PROGRESS]
+#### [Exquisite Bow Hunter Uprising](bow-hunter-uprising)
 
 We have had enough of this colonial bullshit. Let's revolt!
 

@@ -17,7 +17,7 @@ MIN_YELLOW_THRESHOLD = (20, 64, 128)
 MAX_YELLOW_THRESHOLD = (40, 256, 256)
 
 
-# The area of a colored contoured must be at least that large to be considered
+# The area of a colored contour must be at least that large to be considered
 MIN_CONTOUR_AREA = 500
 
 
@@ -26,7 +26,8 @@ first = lambda tup: tup[0]
 
 def get_centers_of_roi(im, min_t, max_t):
     """Return a list of pairs (x, y) corresponding to the coordinates of the
-    centers of the region of interests.
+    centers of the region of interests. The list is sorted by decreasing order
+    of the area of the regions.
 
     The ROIs are those whose pixels have an HSV value between `min_t` and
     `max_t` in the image `im`. `im` should be an opencv RGB image (as returned
@@ -61,16 +62,16 @@ def get_centers_of_roi(im, min_t, max_t):
 
         result.append((area, center_x, center_y))
 
-    return sorted(result, key=first)
+    return sorted(result, key=first, reverse=True)
 
 
-def main():
+if __name__ == '__main__':
     """Draw a yellow circle centered on the mass centers on each blue region of
     the image.
     """
     import sys
     if len(sys.argv) < 3:
-        print('Usage: python get_centers.py <input filename> <output filename>')
+        print('Usage: python {} <input file> <output file>'.format(sys.argv[0]))
         sys.exit(1)
 
     infile, outfile = sys.argv[1:3]
@@ -87,7 +88,3 @@ def main():
         cv2.circle(im, (x, y), radius, color)
 
     cv2.imwrite(outfile, im)
-
-
-if __name__ == '__main__':
-    main()

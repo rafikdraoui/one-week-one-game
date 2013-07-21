@@ -37,16 +37,18 @@ HEIGHT = 720
 Enemy = namedtuple('Enemy', ['x', 'y', 'time_of_birth'])
 
 
-def spawn_enemy(time):
+def spawn_enemy(current_time):
     x = randint(EDGE_OFFSET, WIDTH - EDGE_OFFSET - ENEMY_WIDTH - 1)
     y = randint(EDGE_OFFSET, HEIGHT - EDGE_OFFSET - ENEMY_HEIGHT - 1)
-    e = Enemy(x, y, time)
+    e = Enemy(x, y, current_time)
     ENEMIES.append(e)
 
 
 def within(enemy, x, y):
-    return (enemy.x < x < enemy.x + ENEMY_WIDTH
-        and enemy.y < y < enemy.y + ENEMY_HEIGHT)
+    return (
+        enemy.x < x < enemy.x + ENEMY_WIDTH and
+        enemy.y < y < enemy.y + ENEMY_HEIGHT
+    )
 
 
 def draw_ammo(game_board, num_ammo):
@@ -56,8 +58,8 @@ def draw_ammo(game_board, num_ammo):
             game_board,
             (step * (i + 1), step),
             (step * (i + 1) + 10, 3 * step),
-            (255, 0, 0),
-            -1
+            (255, 0, 0),  # blue
+            -1  # fill rectangle
         )
 
 
@@ -73,14 +75,14 @@ def draw_crosshair(frame, game_board):
 
 
 def draw_enemies(game_board, image):
-    magic = image[:,:,3]/255.0
+    alpha = image[:, :, 3]/255.0
     for enemy in ENEMIES:
         x, y = enemy.x, enemy.y
 
         for c in range(3):
             current_value = game_board[y:y+ENEMY_HEIGHT, x:x+ENEMY_WIDTH, c]
             game_board[y:y+ENEMY_HEIGHT, x:x+ENEMY_WIDTH, c] = (
-                image[:,:,c] * magic + current_value * (1 - magic)
+                image[:, :, c] * alpha + current_value * (1 - alpha)
             )
 
 
@@ -94,49 +96,50 @@ def enemy_actions(game_board, time):
     if acting_enemy is None:
         return False
 
-    # TODO: do something
     cv2.circle(
         game_board, (acting_enemy.x, acting_enemy.y), 20, (0, 0, 255), -1)
 
     ENEMIES.remove(acting_enemy)
+
     return True
 
 
-def main():
-    game_over = False
+def run():
     cv2.namedWindow('game')
     video = cv2.VideoCapture()
     video.open(0)
-    counter, score, x, y = (0,) * 4
+
+    time_counter, score, x, y = (0,) * 4
     health = HEALTH
     ammo = AMMO
 
-    background = cv2.imread('background.png', -1)
-    enemy_image = cv2.imread('enemy.png', -1)
+    background = cv2.imread('img/background.png', -1)
+    enemy_image = cv2.imread('img/enemy.png', -1)
+
     while True:
 
         if health == 0:
-            game_over = True
             break
 
-        counter += 1
-        if counter % ENEMY_SPAWN_RATE == 0:
-            spawn_enemy(counter)
+        time_counter += 1
+        if time_counter % ENEMY_SPAWN_RATE == 0:
+            spawn_enemy(time_counter)
 
-        if counter % AMMO_SPAWN_RATE == 0:
+        if time_counter % AMMO_SPAWN_RATE == 0:
             ammo += 1
 
-        succ, frame = video.read()
-        if not succ:
-            video.release()
+        success, frame = video.read()
+        if not success:
             break
+
         frame = cv2.flip(frame, 1)
 
         game_board = background.copy()
         #game_board = frame.copy()
 
-        draw_ammo(game_board, ammo)
         draw_enemies(game_board, enemy_image)
+        draw_ammo(game_board, ammo)
+
         new_center = draw_crosshair(frame, game_board)
         if new_center is not None:
             x, y = new_center
@@ -154,20 +157,19 @@ def main():
                     ENEMIES.remove(enemy)
                     print('BOOM! Score: {0}'.format(score))
 
-        hit = enemy_actions(background, counter)
-        if hit:
+        enemy_hit = enemy_actions(background, time_counter)
+        if enemy_hit:
             health -= 1
-
-    if game_over:
-        print('\nFINAL SCORE: {0}'.format(score))
-        im = cv2.imread('gameover.png', -1)
-        height, width, _ = im.shape
-        background[50:50+height, 330:330+width] = im
-        cv2.imshow('game', background)
-        cv2.waitKey(0)
 
     video.release()
 
+    print('\nFINAL SCORE: {0}'.format(score))
+    im = cv2.imread('img/gameover.png', -1)
+    height, width, _ = im.shape
+    background[50:50+height, 330:330+width] = im
+    cv2.imshow('game', background)
+    cv2.waitKey(0)
+
 
 if __name__ == '__main__':
-    main()
+    run()

@@ -1,5 +1,8 @@
 # Exquisite Bow Hunter Uprising
 
+Your home is occupied by the British Empire. You, an exquisite bow hunter, have
+had enough.
+
 ### Original Plan
 
 Capture webcam stream using `getUserMedia`, send video frames through
@@ -18,13 +21,24 @@ Turns out that sending images from the browser to the server and drawing on the
 canvas is too slow, so instead the game will happen purely in python, using
 OpenCV to show the video with the crosshair and enemy drawings on top of it.
 
-### What's done:
 
-- Detecting center coordinates of colored regions of a jpeg image (see
-  `image_processing.py`).
+### How to play
 
-- Simple game loop, video is shown with crosshair following a blue object, and
-  enemies being spawned and getting killed when the crosshair intersects with
-  them.
+Make sure that you have [OpenCv][] installed. On OS X, the easiest way is to
+use [Homebrew][]:
+
+```
+brew tap homebrew/science
+brew install opencv
+```
+
+Find an object that is not too shiny and has a color distinct from the
+background. Find the range of HSV values for this color (maybe with the help of
+`get_color.py`) and set those values as `MIN_T` and `MAX_T` in `game.py`.
+
+To start the game, run `python game.py`. To control the crosshair, move the
+object in front of a webcam. To shoot, press the space bar.
+
 
 [OpenCV]: http://opencv.org/
+[Homebrew]: http://brew.sh/
